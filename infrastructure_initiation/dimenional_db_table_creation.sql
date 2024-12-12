@@ -8,6 +8,7 @@ CREATE TABLE dim_categories_scd1 (
 	CategoryName VARCHAR(255) NOT NULL,
 	Description VARCHAR(500) NULL
 );
+GO
 
 -- DimCustomers SCD4 
 DROP TABLE IF EXISTS dim_customers_SCD4_history;
@@ -29,6 +30,7 @@ CREATE TABLE dim_customers_SCD4_history (
 	ValidFrom DATETIME NULL,
 	ValidTo DATETIME NULL
 );
+GO
 
 DROP TABLE IF EXISTS dim_customers_SCD4_current;
 CREATE TABLE dim_customers_SCD4 (
@@ -48,6 +50,7 @@ CREATE TABLE dim_customers_SCD4 (
 	Fax VARCHAR(255) NULL,
 	ValidFrom DATETIME NULL
 );
+GO
 
 -- DimEmployees
 DROP TABLE IF EXISTS dim_employees_SCD1;
@@ -71,6 +74,7 @@ CREATE TABLE dim_employees_SCD1 (
 	ReportsTo INT NULL,
 	PhotoPath VARCHAR(255) NULL
 );
+GO
 
 -- DimProducts
 DROP TABLE IF EXISTS dim_products_SCD4_history;
@@ -89,6 +93,7 @@ CREATE TABLE dim_products_SCD4_history (
 	ValidFrom DATETIME NULL,
 	ValidTo DATETIME NULL
 );
+GO
 
 DROP TABLE IF EXISTS dim_products_SCD4_current;
 CREATE TABLE dim_products_SCD4_current (
@@ -105,6 +110,7 @@ CREATE TABLE dim_products_SCD4_current (
 	Discontinued BIT NULL,
 	ValidFrom DATETIME NULL
 );
+GO
 
 -- DimRegion
 DROP TABLE IF EXISTS dim_region_SCD2;
@@ -116,6 +122,7 @@ CREATE TABLE dim_region_SCD2 (
 	ValidTo INT NULL,
 	IsCurrent BIT NULL
 );
+GO
 
 -- DimShippers
 DROP TABLE IF EXISTS dim_shippers_SCD3;
@@ -129,6 +136,7 @@ CREATE TABLE dim_shippers_SCD3 (
 	Phone_Prev2 VARCHAR(255),
 	Phone_Prev2_ValidTo INT NULL
 );
+GO
 
 -- DimSuppliers SCD1
 DROP TABLE IF EXISTS dim_suppliers_SCD3;
@@ -156,6 +164,7 @@ CREATE TABLE dim_suppliers_SCD3 (
 	HomePage VARCHAR(MAX) NULL,
 	ValidFrom datetime NULL
 );
+GO
 
 -- DimTerritories
 DROP TABLE IF EXISTS dim_territories_SCD2;
@@ -168,31 +177,62 @@ CREATE TABLE dim_territories_SCD2 (
 	ValidTo INT NULL,
 	IsCurrent BIT NULL
 );
+GO
 
 -- FactOrders
 DROP TABLE IF EXISTS fact_orders;
+-- CREATE TABLE fact_orders (
+-- 	Order_Product_SK_PK INT IDENTITY(1, 1) PRIMARY KEY,
+-- 	OrderID_NK INT,
+-- 	ProductID_SK_FK INT,
+-- 	UnitPrice DECIMAL(20, 2) NOT NULL,
+-- 	Quantity INT NOT NULL,
+-- 	Discount DECIMAL(20,10) DEFAULT 0.0,
+-- 	CustomerID VARCHAR(5),
+-- 	CustomerID_SK_FK INT,
+-- 	EmployeeID_NK INT,
+-- 	EmployeeID_SK_FK INT,
+-- 	OrderDate DATE,
+-- 	RequiredDate DATE,
+-- 	ShippedDate DATE,
+-- 	ShipVia_NK INT,
+-- 	ShipVia_SK_FK INT,
+-- 	Freight DECIMAL(10, 2),
+-- 	ShipAddress VARCHAR(255),
+-- 	ShipCity VARCHAR(255),
+-- 	ShipRegion VARCHAR(255),
+-- 	ShipPostalCode VARCHAR(20),
+-- 	ShipCountry VARCHAR(255),
+-- 	TerritoryID_NK INT, 
+-- 	TerritoryID_SK_FK INT
+-- );
 CREATE TABLE fact_orders (
-	Order_Product_SK_PK INT IDENTITY(1, 1) PRIMARY KEY,
-	OrderID_NK INT,
-	ProductID_SK_FK INT,
-	UnitPrice DECIMAL(20, 2) NOT NULL,
-	Quantity INT NOT NULL,
-	Discount DECIMAL(20,10) DEFAULT 0.0,
-	CustomerID VARCHAR(5),
-	CustomerID_SK_FK INT,
-	EmployeeID_NK INT,
-	EmployeeID_SK_FK INT,
-	OrderDate DATE,
-	RequiredDate DATE,
-	ShippedDate DATE,
-	ShipVia_NK INT,
-	ShipVia_SK_FK INT,
-	Freight DECIMAL(10, 2),
-	ShipAddress VARCHAR(255),
-	ShipCity VARCHAR(255),
-	ShipRegion VARCHAR(255),
-	ShipPostalCode VARCHAR(20),
-	ShipCountry VARCHAR(255),
-	TerritoryID_NK INT, 
-	TerritoryID_SK_FK INT
+	OrderKey INT IDENTITY(1,1) PRIMARY KEY,
+	OrderID INT NOT NULL,
+	ProductID INT NOT NULL,
+	CustomerKey INT NOT NULL,
+	EmployeeKey INT NOT NULL,
+	OrderDate DATETIME,
+	RequiredDate DATETIME,
+	ShippedDate DATETIME,
+	ShipVia INT,
+	Freight DECIMAL(18,2),
+	ShipName NVARCHAR(255),
+	ShipAddress NVARCHAR(MAX),
+	ShipCity NVARCHAR(255),
+	ShipRegion NVARCHAR(255),
+	ShipPostalCode NVARCHAR(255),
+	ShipCountry NVARCHAR(255),
+	Quantity INT,
+	UnitPrice DECIMAL(18,2),
+	Discount FLOAT
 );
+GO
+
+DROP TABLE IF EXISTS fact_orders;
+CREATE TABLE Dim_SOR (
+	SourceKey INT IDENTITY(1,1) PRIMARY KEY,
+	StagingRawID INT NOT NULL,
+	TableName NVARCHAR(255) NOT NULL
+);
+GO
