@@ -210,8 +210,8 @@ CREATE TABLE fact_orders (
 	OrderKey INT IDENTITY(1,1) PRIMARY KEY,
 	OrderID INT NOT NULL,
 	ProductID INT NOT NULL,
-	CustomerKey INT NOT NULL,
-	EmployeeKey INT NOT NULL,
+	CustomerID VARCHAR(10) NOT NULL,
+	EmployeeID INT NOT NULL,
 	OrderDate DATETIME,
 	RequiredDate DATETIME,
 	ShippedDate DATETIME,
@@ -223,6 +223,7 @@ CREATE TABLE fact_orders (
 	ShipRegion NVARCHAR(255),
 	ShipPostalCode NVARCHAR(255),
 	ShipCountry NVARCHAR(255),
+	TerritoryID INT,
 	Quantity INT,
 	UnitPrice DECIMAL(18,2),
 	Discount FLOAT
