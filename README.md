@@ -28,7 +28,7 @@ This project focuses on the creation and population of a Dimensional Database fo
    - Enable the pipeline to be easily re-run with different parameters while maintaining data integrity.
 
 ## Project Structure
-```css
+```
 project/
 │
 ├── infrastructure_initiation/
