@@ -1,40 +1,52 @@
--- Update dim_suppliers_SCD3
-INSERT INTO dim_suppliers_SCD3 (
-    SupplierID_NK,
-    CompanyName,
-    ContactName,
-    ContactTitle,
-    Address,
-    City,
-    Region,
-    PostalCode,
-    Country,
-    Phone,
-    Fax,
-    HomePage,
-    ValidFrom,
-    StagingRawID_NK
-)
-SELECT 
-    s.SupplierID AS SupplierID_NK,
-    s.CompanyName,
-    s.ContactName,
-    s.ContactTitle,
-    s.Address,
-    s.City,
-    s.Region,
-    s.PostalCode,
-    s.Country,
-    s.Phone,
-    s.Fax,
-    s.HomePage,
-    GETDATE() AS ValidFrom,
-    sor.StagingRawID_NK
-FROM staging_Suppliers s
-JOIN Dim_SOR sor
-    ON sor.StagingRawID_NK = s.staging_raw_id
-WHERE NOT EXISTS (
-    SELECT 1 FROM dim_suppliers_SCD3 d
-    WHERE d.SupplierID_NK = s.SupplierID
-);
-
+DECLARE @CurrentDate DATETIME = GETDATE();
+-- MERGE operation for SCD3 implementationMERGE INTO dim_suppliers_SCD3 AS target
+USING (SELECT     SupplierID,
+    CompanyName,    ContactName,
+    ContactTitle,    Address,
+    City,    Region,
+    PostalCode,    Country,
+    Phone,    Fax,
+    HomePage,    staging_raw_id
+FROM staging_Suppliers) AS sourceON target.SupplierID_NK = source.SupplierID
+-- Handle updates: update current values and preserve prior values
+WHEN MATCHED AND (       ISNULL(target.ContactName, '') <> ISNULL(source.ContactName, '')
+    OR ISNULL(target.ContactTitle, '') <> ISNULL(source.ContactTitle, '')) THEN 
+UPDATE SET    target.ContactName_Prev2 = target.ContactName_Prev1,
+    target.ContactName_Prev2_ValidTo = target.ContactName_Prev1_ValidTo,    target.ContactName_Prev1 = target.ContactName,
+    target.ContactName_Prev1_ValidTo = DATEDIFF(DAY, '1900-01-01', GETDATE()),  -- Using serialized date    target.ContactName = source.ContactName,
+    target.ContactTitle_Prev2 = target.ContactTitle_Prev1,
+    target.ContactTitle_Prev2_ValidTo = target.ContactTitle_Prev1_ValidTo,    target.ContactTitle_Prev1 = target.ContactTitle,
+    target.ContactTitle_Prev1_ValidTo = DATEDIFF(DAY, '1900-01-01', GETDATE()),    target.ContactTitle = source.ContactTitle,
+    target.CompanyName = source.CompanyName,
+    target.Address = source.Address,    target.City = source.City,
+    target.Region = source.Region,    target.PostalCode = source.PostalCode,
+    target.Country = source.Country,    target.Phone = source.Phone,
+    target.Fax = source.Fax,    target.HomePage = source.HomePage,
+    target.ValidFrom = @CurrentDate
+WHEN NOT MATCHED BY TARGET THENINSERT (
+    SupplierID_NK,    CompanyName,
+    ContactName,    ContactName_Prev1,
+    ContactName_Prev1_ValidTo,    ContactName_Prev2,
+    ContactName_Prev2_ValidTo,    ContactTitle,
+    ContactTitle_Prev1,    ContactTitle_Prev1_ValidTo,
+    ContactTitle_Prev2,    ContactTitle_Prev2_ValidTo,
+    Address,    City,
+    Region,    PostalCode,
+    Country,    Phone,
+    Fax,    HomePage,
+    ValidFrom)
+VALUES (    source.SupplierID,
+    source.CompanyName,    source.ContactName,
+    NULL, -- Initial load; no previous values
+    NULL,    NULL,
+    NULL,    source.ContactTitle,
+    NULL,    NULL,
+    NULL,    NULL,
+    source.Address,    source.City,
+    source.Region,    source.PostalCode,
+    source.Country,    source.Phone,
+    source.Fax,    source.HomePage,
+    @CurrentDate);
+-- Log each record processed into Dim_SOR for tracking
+INSERT INTO Dim_SOR (StagingRawID_NK, TableName)
+SELECT DISTINCT staging_raw_id, 'staging_Suppliers'FROM staging_Suppliers;
