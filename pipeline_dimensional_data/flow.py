@@ -1,58 +1,3 @@
-# import logging
-# import logging.config
-# import tasks
-# import os
-# import utils
-# from logging import getLogger
-# # from . import config
-# # from . import tasks
-# # import logging
-# # import utils
-# # from .config import sql_server_config
-# # from logging1 import log_message_dim
-
-
-# config_file_path = os.path.join(os.getcwd(), 'logging.conf')
-
-# log_file = "logs/logs_dimensional_data_pipeline.txt"
-# # Modify
-# #log_file = r'C:\\Users\\hasmik\\Downloads\\BI-GP2\\logs\\logs_dimensional_data_pipeline.txt'
-
-# # Configure logging from logging.py
-# logging.config.fileConfig(
-#         config_file_path, 
-#         defaults={'LOGFILE': log_file}
-#     )
-# logger = getLogger(__name__)
-
-
-# class DimensionalDataFlow:
-#     def __init__(self):
-#         self.execution_id = utils.uuid_generator()
-#         self.conn_ER = tasks.connect_db_create_cursor(['DimensionalDatabase'])
-
-#     def exec(self):
-#         # Creating tables
-#         # tasks.create_dimension_tables(self.conn_ER)
-#         tasks.create_table(self.conn_ER)
-
-
-#         #Ingesting data into the tables
-#         tasks.update_table(self.conn_ER, 'ORDERS_RELATIONAL_DB','dbo','Categories','ORDERS_DIMENSIONAL_DB', 'dbo', 'DimCategories')
-#         tasks.update_table(self.conn_ER, 'ORDERS_RELATIONAL_DB','dbo','Customers','ORDERS_DIMENSIONAL_DB', 'dbo', 'DimCustomers')
-#         tasks.update_table(self.conn_ER, 'ORDERS_RELATIONAL_DB','dbo','Employees','ORDERS_DIMENSIONAL_DB', 'dbo', 'DimEmployees')
-#         tasks.update_table(self.conn_ER, 'ORDERS_RELATIONAL_DB','dbo','Products','ORDERS_DIMENSIONAL_DB', 'dbo', 'DimProducts')
-#         tasks.update_table(self.conn_ER, 'ORDERS_RELATIONAL_DB','dbo','Region','ORDERS_DIMENSIONAL_DB', 'dbo', 'DimRegion')
-#         tasks.update_table(self.conn_ER, 'ORDERS_RELATIONAL_DB','dbo','Shippers','ORDERS_DIMENSIONAL_DB', 'dbo', 'DimShippers')
-#         tasks.update_table(self.conn_ER, 'ORDERS_RELATIONAL_DB','dbo','Suppliers','ORDERS_DIMENSIONAL_DB', 'dbo', 'DimSuppliers')
-#         tasks.update_table(self.conn_ER, 'ORDERS_RELATIONAL_DB','dbo','Territories','ORDERS_DIMENSIONAL_DB', 'dbo', 'DimTerritories')
-#         tasks.update_table(self.conn_ER, db_rel='ORDERS_RELATIONAL_DB',schema_rel='dbo', table_rel='', db_dim='ORDERS_DIMENSIONAL_DB', schema_dim='dbo', table_dim='FactOrders')
-#         self.conn_ER.close()
-
-#         # Log execution completion
-#         logger.info(f"Execution complete.  \n execution_id is [ {self.execution_id} ]")
-
-
 
 from . import config
 from . import tasks
@@ -64,53 +9,64 @@ from logging1 import log_message_dim
 
 class DimensionalDataFlow:
     def __init__(self):
+        # Generate a unique execution ID
         self.execution_id = utils.generate_uuid()
         self.logger = logging.getLogger('DimensionalDataFlowLogger')
         self.logger.info(f'Dimensional database connection initialized with execution_id: {self.execution_id}')
 
+        # Initialize database connection
         self.conn_dimensional = utils.connect_db_create_cursor(sql_server_config, 'DimensionalDatabase')
         log_message_dim('info', 'Dimensional database connection initialized', self.execution_id)
 
-        
     def close_connection(self):
+        # Close the database connection
         self.conn_dimensional.close()
         log_message_dim('info', 'Database connections closed', self.execution_id)
 
-    def exec(self):
+
+
+    def exec(self, start_date=None, end_date=None):
+        """
+        Sequentially executes tasks to populate and update dimensional data tables.
+
+        Args:
+            start_date (str): Optional start date for data processing.
+            end_date (str): Optional end date for data processing.
+        """
         log_message_dim('info', 'Starting execution of dimensional data flow', self.execution_id)
 
+        table_operations = [
+            {"table_name": "DimCategories", "sql_filename": "update_dim_categories"},
+            {"table_name": "DimCustomers", "sql_filename": "update_dim_customers"},
+            {"table_name": "DimEmployees", "sql_filename": "update_dim_employees"},
+            {"table_name": "DimProducts", "sql_filename": "update_dim_products"},
+            {"table_name": "DimRegion", "sql_filename": "update_dim_region"},
+            {"table_name": "DimShippers", "sql_filename": "update_dim_shippers"},
+            {"table_name": "DimSuppliers", "sql_filename": "update_dim_supplier"},
+            {"table_name": "DimTerritories", "sql_filename": "update_dim_territories"},
+            {"table_name": "FactError", "sql_filename": "update_fact_error"},
+            {"table_name": "Fact", "sql_filename": "update_fact"}
+        ]
+
         try:
-            tasks.insert_into_dim_categories(self.conn_dimensional, config.input_dir)
-            log_message_dim('info', 'DimCategories table updated successfully.', self.execution_id)
+            for operation in table_operations:
+                result = tasks.insert_into_table(
+                    self.conn_dimensional,
+                    config.input_dir,
+                    operation["table_name"],
+                    operation["sql_filename"],
+                    start_date=start_date,
+                    end_date=end_date  # Pass date parameters
+                )
 
-            tasks.insert_into_dim_customers(self.conn_dimensional, config.input_dir)
-            log_message_dim('info', 'DimCustomers table updated successfully.', self.execution_id)
-
-            tasks.insert_into_dim_employees(self.conn_dimensional, config.input_dir)
-            log_message_dim('info', 'DimEmployees table updated successfully.', self.execution_id)
-
-            tasks.insert_into_dim_products(self.conn_dimensional, config.input_dir)
-            log_message_dim('info', 'DimProducts table updated successfully.', self.execution_id)
-
-            tasks.insert_into_dim_region(self.conn_dimensional, config.input_dir)
-            log_message_dim('info', 'DimRegion table updated successfully.', self.execution_id)
-
-            tasks.insert_into_dim_shippers(self.conn_dimensional, config.input_dir)
-            log_message_dim('info', 'DimShippers table updated successfully.', self.execution_id)
-
-            tasks.insert_into_dim_suppliers(self.conn_dimensional, config.input_dir)
-            log_message_dim('info', 'DimSuppliers table updated successfully.', self.execution_id)
-
-            tasks.insert_into_dim_territories(self.conn_dimensional, config.input_dir)
-            log_message_dim('info', 'DimTerritories table updated successfully.', self.execution_id)
-
-            tasks.insert_into_fact_error(self.conn_dimensional, config.input_dir)
-            log_message_dim('info', 'Fact Error table updated successfully.', self.execution_id)
-
-            tasks.insert_into_fact(self.conn_dimensional, config.input_dir)
-            log_message_dim('info', 'FactOrders table updated successfully.', self.execution_id)
+                if result['success']:
+                    log_message_dim('info', f"{operation['table_name']} table updated successfully.", self.execution_id)
+                else:
+                    log_message_dim('error', f"Failed to update {operation['table_name']} table: {result.get('error')}", self.execution_id)
+                    break  # Stop further execution if a failure occurs
 
             log_message_dim('info', 'Completed execution of dimensional data flow', self.execution_id)
+
         except Exception as e:
             log_message_dim('error', f'Error during execution: {e}', self.execution_id)
             raise
