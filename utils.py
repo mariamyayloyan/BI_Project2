@@ -6,7 +6,6 @@ import os
 def get_sql_config(filename, database):
     cf = configparser.ConfigParser()
     cf.read(filename)
-
     if database not in cf:
         raise ValueError(f"Database configuration '{database}' not found in {filename}")
 
